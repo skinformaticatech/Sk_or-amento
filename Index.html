@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Gerador de Documentos - Assistência Técnica</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body { font-family: sans-serif; max-width: 700px; margin: auto; padding: 20px; }
+    label { display: block; margin-top: 12px; }
+    input, button { width: 100%; padding: 8px; margin-top: 5px; }
+    .docs { margin-top: 25px; }
+    textarea { width: 100%; height: 100px; margin-top: 10px; }
+    .btn-download { margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+  <h1>🛠️ Gerador de Documentos - Assistência Técnica</h1>
+
+  <label>Nome do Cliente:
+    <input type="text" id="cliente">
+  </label>
+
+  <label>Serviço Realizado:
+    <input type="text" id="servico">
+  </label>
+
+  <label>Valor (R$):
+    <input type="number" id="valor">
+  </label>
+
+  <label>Data do Serviço:
+    <input type="date" id="data">
+  </label>
+
+  <label>Garantia (dias):
+    <input type="number" id="garantia">
+  </label>
+
+  <button onclick="gerarDocumentos()">Gerar Documentos</button>
+
+  <div class="docs">
+    <h2>📄 Orçamento</h2>
+    <textarea id="orcamento" readonly></textarea>
+    <button class="btn-download" onclick="baixarPDF('orcamento')">📥 Baixar Orçamento em PDF</button>
+
+    <h2>📄 Recibo</h2>
+    <textarea id="recibo" readonly></textarea>
+    <button class="btn-download" onclick="baixarPDF('recibo')">📥 Baixar Recibo em PDF</button>
+
+    <h2>📄 Garantia</h2>
+    <textarea id="garantiaDoc" readonly></textarea>
+    <button class="btn-download" onclick="baixarPDF('garantiaDoc')">📥 Baixar Garantia em PDF</button>
+
+    <h2>📦 Todos os Documentos</h2>
+    <button class="btn-download" onclick="baixarTudoEmUm()">📥 Baixar Todos em PDF</button>
+  </div>
+
+  <script>
+    function formatarData(dataISO) {
+      const data = new Date(dataISO);
+      return data.toLocaleDateString('pt-BR');
+    }
+
+    function adicionarDias(dataISO, dias) {
+      const data = new Date(dataISO);
+      data.setDate(data.getDate() + dias);
+      return data.toLocaleDateString('pt-BR');
+    }
+
+    function gerarDocumentos() {
+      const cliente = document.getElementById('cliente').value;
+      const servico = document.getElementById('servico').value;
+      const valor = parseFloat(document.getElementById('valor').value);
+      const data = document.getElementById('data').value;
+      const garantia = parseInt(document.getElementById('garantia').value);
+
+      const dataFormatada = formatarData(data);
+      const validadeGarantia = adicionarDias(data, garantia);
+
+      const orcamento = `--- ORÇAMENTO ---
+Cliente: ${cliente}
+Serviço: ${servico}
+Valor estimado: R$ ${valor.toFixed(2)}
+Data: ${dataFormatada}
+------------------`;
+
+      const recibo = `--- RECIBO ---
+Recebemos de ${cliente} o valor de R$ ${valor.toFixed(2)}
+Referente ao serviço: ${servico}
+Data: ${dataFormatada}
+------------------`;
+
+      const garantiaDoc = `--- GARANTIA ---
+Cliente: ${cliente}
+Serviço: ${servico}
+Garantia válida até: ${validadeGarantia} (${garantia} dias)
+------------------`;
+
+      document.getElementById('orcamento').value = orcamento;
+      document.getElementById('recibo').value = recibo;
+      document.getElementById('garantiaDoc').value = garantiaDoc;
+    }
+
+    async function baixarPDF(id) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const conteudo = document.getElementById(id).value;
+      doc.setFont("courier", "normal");
+      doc.text(conteudo, 10, 20);
+      doc.save(`${id}.pdf`);
+    }
+
+    async function baixarTudoEmUm() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      const orcamento = document.getElementById('orcamento').value;
+      const recibo = document.getElementById('recibo').value;
+      const garantia = document.getElementById('garantiaDoc').value;
+
+      doc.setFont("courier", "normal");
+      doc.setFontSize(12);
+
+      // Orçamento
+      doc.text("📄 ORÇAMENTO", 10, 20);
+      doc.text(orcamento, 10, 30);
+
+      // Recibo
+      doc.addPage();
+      doc.text("📄 RECIBO", 10, 20);
+      doc.text(recibo, 10, 30);
+
+      // Garantia
+      doc.addPage();
+      doc.text("📄 GARANTIA", 10, 20);
+      doc.text(garantia, 10, 30);
+
+      doc.save("documentos_completos.pdf");
+    }
+  </script>
+
+</body>
+</html>
